@@ -1,0 +1,60 @@
+root_form:
+  "1":
+    adjective: "-il"
+    nominative: "-a"
+    verbal: "-ar"
+    verbal_adjective: "-ra"
+    prepositional: "-en"
+    adject_adjective: "-le"
+  "2":
+    adjective: "-il-"
+    nominative: "-i-a"
+    verbal: "-a-ar"
+    verbal_adjective: "-or-ra"
+    prepositional: "-e-en"
+    adject_adjective: "-a-el"
+  "3":
+    adjective: "-a-il-"
+    nominative: "-un-i-a"
+    verbal: "-a-ar-"
+    verbal_adjective: "-or-ra-"
+    prepositional: "-i-e-en"
+    adject_adjective: "-ra-e-el"
+
+article:
+  definite:
+    non_spatial: "nan"
+    proximal: "nin"
+    immediate: "nini"
+    distal: "non"
+  indefinite:
+    non_spatial: "at"
+    proximal: "it"
+    immediate: "iti"
+    distal: "ot"
+
+deictic_nouns:
+  spatial:
+    proximal: "nia"
+    immediate: "ini"
+    distal: "ana"
+  temporal:
+    proximal: "ti"
+    immediate: "te"
+    distal: "tan"
+
+verb_tense_endings:
+  future: "il"
+  present: "a"
+  past: "on"
+
+verb_infinitive_suffix: ""
+noun_plurality_suffix: "at"
+
+verb_particles:
+  aspect:
+    completive: a
+    progressive: apa
+    habitual: haz
+    perfect: ha
+
