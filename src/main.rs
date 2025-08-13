@@ -6,6 +6,7 @@ pub mod draw;
 pub mod settings;
 pub mod ui;
 pub mod lang;
+pub mod debug;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
