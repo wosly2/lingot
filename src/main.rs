@@ -1,6 +1,6 @@
 use raylib::prelude::*;
 
-use crate::{lang::{to_object, Lang}, ui::{Element, ElementTraits, Label}};
+use crate::{lang::{to_object, Lang}, ui::*};
 
 pub mod draw;
 pub mod settings;
@@ -26,57 +26,72 @@ fn main() {
 
     let mut context = draw::Context::new(&mut game_font_options);
 
-    let mut screen_panel = ui::Panel::new(0, 0, rl.get_screen_width(), rl.get_screen_height(), Color::BLACK);
-    screen_panel.add_child(
-        ui::Element::Label(
-            Label::new(
-                "don't you dare press space",
-                10, 10, Color::WHITE,
-            )
-        ), 
-        "label1"
+    let mut parent_panel = Panel::new(0, 0, rl.get_screen_width(), rl.get_screen_height(), Color::WHITE);
+    
+
+    parent_panel.add_child(
+        Element::TextEdit(TextEdit::new(
+            Vector4 { x: 40.0, y: 30.0, z: 500.0, w: 200.0 }, 
+            10, 
+            Color::LIGHTGRAY, 
+            Color::BLACK, 
+            "artDef{nspac} nom{cat 0} aspPerf verb{run past} prep{face} artDef{dist} nom{water 0} adj{run}".to_string(),
+            Some(38),
+        )),
+        "input_edit"
     );
 
-    // let objects = lang::to_object("artIndef{prox} nom{young 1} verb{run past} prep{close} artDef{dist} nom{water 0} adj{run}");
-    // dbg!(objects);
-    let lang = match Lang::load("assets/lang") {
-        Ok(l) => l,
-        Err(e) => panic!("{}", e)
-    };
-    // println!("{}", lang.render("artIndef{prox} nom{young 1} verb{run past} prep{close} artDef{dist} nom{water 0} adj{run}"));
-
-    let rendered_text = format!(
-        "{}\n{}\n{}\n\n{}\n{}\n{}",
-        "some children have ran toward that river",
-        "artIndef{prox} nom{young 1} aspPerf verb{run past} prep{face} artDef{dist} nom{water 0} adj{run}",
-        lang.render("artIndef{prox} nom{young 1} aspPerf verb{run past} prep{face} artDef{dist} nom{water 0} adj{run}"),
-        "the cat sleeps near the fire",
-        "artDef{nspac} nom{cat 0} aspProg verb{sleep pres} prep{close} artDef{nspac} nom{fire 0}",
-        lang.render("artDef{nspac} nom{cat 0} aspProg verb{sleep pres} prep{close} artDef{nspac} nom{fire 0}")
+    parent_panel.add_child(
+        Element::Label(Label::new(
+            "".to_string(),
+            40, 230,
+            Color::BLACK,
+            Some(38),
+        )),
+        "output_label"
     );
-    println!("{}", rendered_text);
 
-    println!("\n\n");
-    dbg!(to_object("artIndef{prox} nom{young 1} aspPerf verb{run past} prep{face} artDef{dist} nom{water 0} adj{run}"));
+    let clang = lang::Lang::load("assets/lang").unwrap();
 
     while !rl.window_should_close() {
         // logic ---------------------------------------------------------------------------------
 
         if rl.is_window_resized() {
             context.font.resize(&rl);
-            screen_panel.dim.z = rl.get_screen_width() as f32;
-            screen_panel.dim.w = rl.get_screen_height() as f32;
+            parent_panel.dim.z = rl.get_screen_width() as f32;
+            parent_panel.dim.w = rl.get_screen_height() as f32;
         }
 
-        ui::with_element::<ui::Label, _>(&screen_panel.children, "label1", ui::matcher::label, |label| {
-            label.text = rendered_text.as_str()
+        // get the string value from the input_edit
+        let mut input = String::new();
+        ui::with_element::<ui::TextEdit, _>(&parent_panel.children, "input_edit", ui::matcher::text_edit, |edit| {
+            input = edit.text.clone();
         });
+
+        // put the rendered version of that in the label
+        ui::with_element::<ui::Label, _>(&parent_panel.children, "output_label", ui::matcher::label, |label| {
+            label.text = format!("Output:\n{}", 
+                match clang.render(input.clone().as_str()) {
+                    Ok(s) => s,
+                    Err(s) => s,
+                }
+            )
+        });
+
+
         
         // drawing -------------------------------------------------------------------------------
         let mut d = rl.begin_drawing(&thread);
 
-        d.clear_background(Color::RED); // red so i can see when things fuck up
+        d.clear_background(Color::BLACK);
         
-        screen_panel.render(0, 0, &mut context, &mut d);
+        parent_panel.render(0, 0, &mut context, &mut d);
+        parent_panel.update(&mut d);
     }
 }
+
+
+// syntax for child getting
+// ui::with_element::<ui::Label, _>(&ELEMENT.children, "CHILD_NAME", ui::matcher::ELEMENT_MATCHING, |CHILD_ELEMENT| {
+//     CHILD_ELEMENT
+// });

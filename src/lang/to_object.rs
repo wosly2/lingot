@@ -1,5 +1,7 @@
 use std::vec;
 
+use super::super::debug::*;
+
 #[derive(Debug)]
 pub enum VerbForm {
     TensePresent,
@@ -39,17 +41,40 @@ pub enum Keyword {
     DeicticTemporalNoun(Deixis),
 }
 
-pub fn keyword_from_string(keyword: &str, parameters: Vec<String>) -> Keyword {
-    fn deixis_from_string(deixis_string: String, allow_nonspatial: bool) -> Deixis {
-        match deixis_string.as_str() {
-            "nspac" => if allow_nonspatial {Deixis::NonSpatial} else {panic!("you may not use non spatial deixis here")},
+pub fn keyword_from_string(keyword: &str, parameters: Vec<String>) -> Result<Keyword, String> {
+    fn deixis_from_string(deixis_string: String, allow_nonspatial: bool) -> Result<Deixis, String> {
+        Ok(match deixis_string.as_str() {
+            "nspac" => if allow_nonspatial {Deixis::NonSpatial} else {return Err("you may not use non spatial deixis here".to_string())},
             "prox" => Deixis::Proximal,
             "imm" => Deixis::Immediate,
             "dist" => Deixis::Distal,
-            _ => panic!("no such valid deixis {} in this context", deixis_string)
-        }
+            _ => return Err(format!("no such valid deixis {} in this context", deixis_string))
+        })
     }
-    match keyword {
+    // error handling
+    if !vec!["adj","nom","verb","vadj","prep","aadj","aspComp","aspProg","aspHabt","aspPerf","artDef","artIndef","dNounSpac","dNounTemp"]
+        .contains(&keyword) { return Err(format!("Unkown keyword {}", keyword))}
+    if match keyword {
+        "adj" => 1,
+        "nom" => 2,
+        "verb" => 2,
+        "vadj" => 1,
+        "prep" => 1,
+        "aadj" => 1,
+        "aspComp" => 0,
+        "aspProg" => 0,
+        "aspHabt" => 0,
+        "aspPerf" => 0,
+        "artDef" => 1,
+        "artIndef" => 1,
+        "dNounSpac" => 1,
+        "dNounTemp" => 1,
+        _ => 1000,
+    } != parameters.len() as i32 {
+        return Err("Invalid length of keyword parameters".to_string());
+    }
+    // match conversion
+    Ok(match keyword {
         "adj" => Keyword::Adjective(parameters[0].clone()),
         "nom" => Keyword::Nominative(parameters[0].clone(), {
             if parameters[1] == "1" {true} else {false}
@@ -60,7 +85,7 @@ pub fn keyword_from_string(keyword: &str, parameters: Vec<String>) -> Keyword {
                 "fut" => VerbForm::TenseFuture,
                 "past" => VerbForm::TensePast,
                 "inf" => VerbForm::Infinitive,
-                _ => panic!("unknown parameter {} for verb form", parameters[1])
+                _ => return Err(format!("Unknown parameter {} for verb form", parameters[1]))
             }
         }),
         "vadj" => Keyword::VerbalAdjective(parameters[0].clone()),
@@ -72,14 +97,14 @@ pub fn keyword_from_string(keyword: &str, parameters: Vec<String>) -> Keyword {
         "aspHabt" => Keyword::HabitualAspect,
         "aspPerf" => Keyword::PerfectAspect,
 
-        "artDef" => Keyword::DefiniteArticle(deixis_from_string(parameters[0].clone(), true)),
-        "artIndef" => Keyword::IndefiniteArticle(deixis_from_string(parameters[0].clone(), true)),
-        "dNounSpac" => Keyword::DeicticSpatialNoun(deixis_from_string(parameters[0].clone(), false)),
-        "dNounTemp" => Keyword::DeicticTemporalNoun(deixis_from_string(parameters[0].clone(), false)),
+        "artDef" => Keyword::DefiniteArticle(deixis_from_string(parameters[0].clone(), true)?),
+        "artIndef" => Keyword::IndefiniteArticle(deixis_from_string(parameters[0].clone(), true)?),
+        "dNounSpac" => Keyword::DeicticSpatialNoun(deixis_from_string(parameters[0].clone(), false)?),
+        "dNounTemp" => Keyword::DeicticTemporalNoun(deixis_from_string(parameters[0].clone(), false)?),
 
         
-        _ => panic!("unkown keyword {}", keyword)
-    }
+        _ => return Err(format!("Unkown keyword {}", keyword))
+    })
 }
 
 impl Deixis {
@@ -93,7 +118,7 @@ impl Deixis {
     }
 }
 
-pub fn to_object(text: &str) -> Vec<Keyword> {
+pub fn to_object(text: &str) -> Result<Vec<Keyword>, String> {
     const DEBUG_PRINT: bool = false;
 
     let mut cleaned = String::new();
@@ -139,21 +164,21 @@ pub fn to_object(text: &str) -> Vec<Keyword> {
                 parameters = vec![]; // clear our parameters now
                 reading_parameters = true; word.clear();
             } else {
-                panic!("invalid syntax: parameters have no keyword body")
+                return Err("Invalid syntax: parameters have no keyword body".to_string())
             }
         }
 
         // closing parameter
         if char == '}' {
             if !reading_keyword || !reading_parameters || !reading_parameter {
-                panic!("invalid syntax, closing bracket on no parameter body")
+                return Err("Invalid syntax, closing bracket on no parameter body".to_string())
             } else {
                 if DEBUG_PRINT {println!("  parameter {}", word);};
                 parameters.push(word.clone());
 
                 // push keyword and parameters
                 if DEBUG_PRINT {println!("pushing, keyword={}, parameters={:?}", keyword, parameters);}
-                objects.push(keyword_from_string(keyword.clone().as_str(), parameters.clone()));
+                objects.push(keyword_from_string(keyword.clone().as_str(), parameters.clone())?);
                 parameters = vec![];
 
                 reading_keyword = false; reading_parameters = false; reading_parameter = false; word.clear();
@@ -168,7 +193,7 @@ pub fn to_object(text: &str) -> Vec<Keyword> {
 
                     // push with no arguments
                     if DEBUG_PRINT {println!("pushing, keyword={}, NO PARAMETERS", keyword);}
-                    objects.push(keyword_from_string(word.clone().as_str(), vec![]));
+                    objects.push(keyword_from_string(word.clone().as_str(), vec![])?);
                     
                     reading_parameters = false; word.clear()
                 } else {
@@ -191,5 +216,5 @@ pub fn to_object(text: &str) -> Vec<Keyword> {
         }
     };
 
-    objects
+    Ok(objects)
 }

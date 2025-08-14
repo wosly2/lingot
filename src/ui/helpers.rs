@@ -45,4 +45,12 @@ pub mod matcher {
             None
         }
     }
+
+    pub fn text_edit<'a, 'b>(element: &'b mut Element<'a>) -> Option<&'b mut TextEdit<'a>> {
+        if let Element::TextEdit(e) = element {
+            Some(e)
+        } else {
+            None
+        }
+    }
 }

@@ -45,4 +45,10 @@ impl<'a> ElementTraits<'a> for Panel<'a> {
     fn add_child(&mut self, child: Element<'a>, id: &str) {
         self.children.insert(id.to_string(), Rc::new(RefCell::new(child)));
     }
+
+    fn update(&mut self, draw_handle: &mut RaylibHandle) {
+        for child in &self.children {
+            child.1.borrow_mut().update(draw_handle);
+        }
+    }
 }

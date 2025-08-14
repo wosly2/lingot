@@ -14,6 +14,7 @@ pub enum Element<'a> {
 
 pub trait ElementTraits<'a> {
     fn render(&self, parent_x: i32, parent_y: i32, context: &mut draw::Context, draw_handle: &mut RaylibDrawHandle);
+    fn update(&mut self, draw_handle: &mut RaylibHandle);
     fn get_child(&self, id: &str) -> Option<Rc<RefCell<Element<'a>>>>;
     fn add_child(&mut self, child: Element<'a>, id: &str);
 }
@@ -40,6 +41,14 @@ impl<'a> ElementTraits<'a> for Element<'a> {
             Element::Panel(e) => e.add_child(child, id),
             Element::Label(e) => e.add_child(child, id),
             Element::TextEdit(e) => e.add_child(child, id),
+        }
+    }
+
+    fn update(&mut self, draw_handle: &mut RaylibHandle) {
+        match self {
+            Element::Panel(e) => e.update(draw_handle),
+            Element::Label(e) => e.update(draw_handle),
+            Element::TextEdit(e) => e.update(draw_handle),
         }
     }
 }

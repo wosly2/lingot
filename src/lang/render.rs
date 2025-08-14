@@ -112,17 +112,14 @@ impl Keyword {
     }
 }
 
-pub fn render_keywords(keywords: Vec<Keyword>, lang: &Lang) -> String {
+pub fn render_keywords(keywords: Vec<Keyword>, lang: &Lang) -> Result<String, String> {
     let mut out_string = String::new();
     for keyword in keywords {
-        let rendered = match keyword.render(lang) {
-            Ok(s) => s,
-            Err(e) => panic!("{}", e)
-        };
+        let rendered = keyword.render(lang)?;
         out_string.push_str(&rendered.as_str());
         out_string.push(' ');
     }
-    out_string
+    Ok(out_string)
 }
 
 impl Lang {
@@ -139,8 +136,8 @@ impl Lang {
         })
     }
 
-    pub fn render(&self, text: &str) -> String {
-        let object = to_object(text);
-        render_keywords(object, self)
+    pub fn render(&self, text: &str) -> Result<String, String> {
+        let object = to_object(text)?;
+        Ok(render_keywords(object, self)?)
     }
 }
